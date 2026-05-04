@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import cors from 'cors';
 import express from 'express';
 import { connectDB } from './config/db.js';
 import authRouter from './routes/auth.js';
@@ -14,6 +15,33 @@ import errorHandler from './middleware/error.js';
 const app = express();
 app.set('trust proxy', true);
 const port = Number(process.env.PORT) || 3000;
+
+function parseAllowedOrigins() {
+  const raw = process.env.ALLOWED_ORIGINS;
+  if (raw?.trim()) {
+    return raw.split(',').map((s) => s.trim()).filter(Boolean);
+  }
+  return [
+    'https://regal-mochi-ba82b6.netlify.app',
+    'http://localhost:8080',
+    'http://127.0.0.1:8080',
+    'http://localhost:3000',
+  ];
+}
+
+const allowedOrigins = parseAllowedOrigins();
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+      callback(null, allowedOrigins.includes(origin));
+    },
+  }),
+);
 
 /** Set true after Mongo is ready (for health checks). */
 let appReady = false;
