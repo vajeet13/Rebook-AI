@@ -1,0 +1,14 @@
+---
+alwaysApply: true
+---
+
+Project: Rebook AI
+Tagline: Turning no-shows into rebooked revenue using voice AI
+
+Build a backend system that:
+
+Manages appointments
+Handles voice agent webhook responses
+Processes confirmation / cancellation / rescheduling
+
+Whenver a new route is created or updated - update the postman collection

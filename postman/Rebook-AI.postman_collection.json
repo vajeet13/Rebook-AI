@@ -1,0 +1,462 @@
+{
+  "info": {
+    "_postman_id": "a8f3e2b1-rebook-ai-api",
+    "name": "Rebook AI",
+    "description": "JWT auth and users API.\n\nSet `baseUrl` (default `http://localhost:3000`). After **Login**, the collection script stores `accessToken` and `refreshToken` unless you overwrite them manually.\n\n**Internal** routes use the same Bearer token as the rest of the API.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "appointmentId",
+      "value": ""
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET Health",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/health",
+            "description": "Returns 200 `{ ok: true }` when Mongo is connected; 503 while starting."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST Register",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\",\n  \"email\": \"test@example.com\",\n  \"password\": \"changeme\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/register",
+            "description": "Creates a user (no JWT returned). Tokens come from Login."
+          },
+          "response": []
+        },
+        {
+          "name": "POST Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const j = pm.response.json();",
+                  "if (j && j.success && j.data) {",
+                  "  const d = j.data;",
+                  "  if (d.accessToken) pm.collectionVariables.set('accessToken', d.accessToken);",
+                  "  if (d.refreshToken) pm.collectionVariables.set('refreshToken', d.refreshToken);",
+                  "  if (d.user && d.user.id) pm.collectionVariables.set('userId', d.user.id);",
+                  "}",
+                  "pm.test('login success', function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"changeme\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Returns `accessToken`, `refreshToken`, and `user`. Test script saves tokens to collection variables."
+          },
+          "response": []
+        },
+        {
+          "name": "POST Refresh",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const j = pm.response.json();",
+                  "if (j && j.success && j.data && j.data.accessToken) {",
+                  "  pm.collectionVariables.set('accessToken', j.data.accessToken);",
+                  "}",
+                  "pm.test('refresh success', function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/refresh",
+            "description": "Returns new `accessToken`. Uses saved `refreshToken`."
+          },
+          "response": []
+        },
+        {
+          "name": "POST Logout",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/logout",
+            "description": "Revokes the refresh token row in MongoDB."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "GET Me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/users/me",
+            "description": "Current user (`Authorization: Bearer` from collection)."
+          },
+          "response": []
+        },
+        {
+          "name": "POST Update my profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Test\",\n  \"lastName\": \"Updated\"\n}"
+            },
+            "url": "{{baseUrl}}/api/users/me",
+            "description": "Send at least one of `firstName` or `lastName`."
+          },
+          "response": []
+        },
+        {
+          "name": "POST Change password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"changeme\",\n  \"newPassword\": \"newsecret\"\n}"
+            },
+            "url": "{{baseUrl}}/api/users/me/password",
+            "description": "Requires current password."
+          },
+          "response": []
+        },
+        {
+          "name": "GET List users (admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/users",
+            "description": "Protected; role must be `admin`."
+          },
+          "response": []
+        },
+        {
+          "name": "GET User by ID (admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/users/{{userId}}",
+            "description": "Uses `userId` from Login test script or set manually. Requires `admin`."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Clients",
+      "item": [
+        {
+          "name": "POST Create client",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Pat\",\n  \"lastName\": \"Patient\",\n  \"phone\": \"+919876543210\",\n  \"email\": \"pat@example.com\",\n  \"notes\": \"\"\n}"
+            },
+            "url": "{{baseUrl}}/api/clients",
+            "description": "Tenant-scoped client (SaaS subscriber)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET List clients",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/clients",
+            "description": ""
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Appointments",
+      "item": [
+        {
+          "name": "POST Create appointment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": \"CLIENT_MONGO_ID\",\n  \"startsAt\": \"2026-05-05T14:00:00.000Z\",\n  \"endsAt\": \"2026-05-05T14:30:00.000Z\",\n  \"serviceId\": \"consult\",\n  \"resourceId\": \"room-1\"\n}"
+            },
+            "url": "{{baseUrl}}/api/appointments",
+            "description": "Replace `clientId` with id from Create client response."
+          },
+          "response": []
+        },
+        {
+          "name": "GET List appointments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/appointments",
+            "description": "Optional query: ?status=scheduled&limit=50"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH Mark appointment completed",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/api/appointments/{{appointmentId}}/complete",
+            "description": "Sets `status` to `completed` for the tenant’s appointment. Returns 409 if the appointment is `cancelled`. Idempotent if already `completed`."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH Update appointment times",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startsAt\": \"2026-05-06T15:00:00.000Z\",\n  \"endsAt\": \"2026-05-06T15:30:00.000Z\"\n}"
+            },
+            "url": "{{baseUrl}}/api/appointments/{{appointmentId}}",
+            "description": "Manually update `startsAt` and `endsAt` (both required). Allowed for any status owned by the tenant."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Waitlist",
+      "item": [
+        {
+          "name": "POST Join waitlist",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": \"CLIENT_MONGO_ID\",\n  \"serviceId\": \"consult\",\n  \"resourceId\": \"room-1\"\n}"
+            },
+            "url": "{{baseUrl}}/api/waitlist",
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "GET List waitlist",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/waitlist",
+            "description": ""
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Webhooks",
+      "item": [
+        {
+          "name": "POST Bolna execution (example)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"00000000-0000-4000-8000-000000000001\",\n  \"status\": \"completed\",\n  \"transcript\": \"User confirmed.\",\n  \"extracted_data\": {\n    \"appointment_outcome\": \"confirmed\",\n    \"appointmentId\": \"APPOINTMENT_MONGO_ID\"\n  },\n  \"context_details\": {\n    \"appointmentId\": \"APPOINTMENT_MONGO_ID\"\n  }\n}"
+            },
+            "url": "{{baseUrl}}/api/webhooks/bolna",
+            "description": "Simulate Bolna; set `appointmentId` to a real id. Use extractions: appointment_outcome, cancellation_reason, new_slot_iso."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Internal",
+      "item": [
+        {
+          "name": "POST Trigger confirmation calls",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/internal/trigger-confirmation-calls",
+            "description": "Requires **Login** (Bearer `accessToken`). Optional Bolna: BOLNA_API_KEY, BOLNA_AGENT_ID."
+          },
+          "response": []
+        },
+        {
+          "name": "POST Trigger Bolna call (direct)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": "{{baseUrl}}/api/internal/trigger-bolna-call/{{appointmentId}}",
+            "description": "Dial the client for this appointment via Bolna. Requires **Login**. Path: Mongo `appointmentId`. Body optional: `agentId`, `userData`. Phone comes from the linked client (or appointment `contactPhone`)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET Bolna execution",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/internal/bolna-executions/{{appointmentId}}",
+            "description": "Bolna execution for the appointment’s stored `lastBolnaExecutionId`. Requires **Login** and a prior trigger call. Set `appointmentId`."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
