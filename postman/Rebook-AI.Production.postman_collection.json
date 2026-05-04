@@ -1,0 +1,13 @@
+{
+  "id": "rebook-ai-production",
+  "name": "Rebook AI — Production",
+  "values": [
+    {
+      "key": "baseUrl",
+      "value": "https://trebook-ai-api-1035500589683.asia-south1.run.app",
+      "type": "default",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment"
+}

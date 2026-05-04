@@ -1,0 +1,12 @@
+node_modules
+.git
+.history
+.env
+.env.*
+!.env.example
+npm-debug.log
+*.md
+.DS_Store
+coverage
+.cursor
+
