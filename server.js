@@ -23,10 +23,21 @@ function parseAllowedOrigins() {
   }
   return [
     'https://regal-mochi-ba82b6.netlify.app',
-    'http://localhost:8080',
-    'http://127.0.0.1:8080',
-    'http://localhost:3000',
+
   ];
+}
+
+function isLocalhostOrigin(origin) {
+  try {
+    const { hostname } = new URL(origin);
+    return (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname === '[::1]'
+    );
+  } catch {
+    return false;
+  }
 }
 
 const allowedOrigins = parseAllowedOrigins();
@@ -35,6 +46,10 @@ app.use(
   cors({
     origin(origin, callback) {
       if (!origin) {
+        callback(null, true);
+        return;
+      }
+      if (isLocalhostOrigin(origin)) {
         callback(null, true);
         return;
       }
