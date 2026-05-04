@@ -1,0 +1,24 @@
+# Copy to cloud-run.config in this folder (gitignored) and fill values.
+#
+#     cp scripts/cloud-run.config.example scripts/cloud-run.config
+#
+# Before first deploy (once per GCP project):
+#   gcloud services enable run.googleapis.com artifactregistry.googleapis.com
+#   gcloud artifacts repositories create terminal \\
+#     --repository-format=docker --location=us-central1 --description="Terminal API"
+#   gcloud auth configure-docker us-central1-docker.pkg.dev
+
+
+# Optional if `gcloud config set project ...` already set:
+# GCP_PROJECT_ID=my-gcp-project
+
+GCP_REGION=us-central1
+GCP_ARTIFACT_REPO=terminal
+GCP_IMAGE_NAME=terminal-v3-api
+GCP_SERVICE_NAME=terminal-v3-api
+
+# true = public URL; false = IAM only
+GCP_ALLOW_UNAUTHENTICATED=true
+
+# Image arch for Cloud Run (default linux/amd64). Cloud Run does not run arm64.
+# GCP_DOCKER_PLATFORM=linux/amd64

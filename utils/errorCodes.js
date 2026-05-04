@@ -89,6 +89,7 @@ const RAW = [
   ['APPOINTMENT_FIELDS_REQUIRED', 400, 'Required appointment fields missing', 'controllers/appointmentController.js'],
   ['WAITLIST_FIELDS_REQUIRED', 400, 'Required waitlist fields missing', 'controllers/waitlistController.js'],
   ['WAITLIST_CLIENT_INVALID', 400, 'Client is not valid for this account', 'controllers/waitlistController.js'],
+  ['RATE_LIMIT_EXCEEDED', 429, 'Too many requests', 'middleware/rateLimiter.js'],
   ['WEBHOOK_FORBIDDEN', 403, 'Webhook verification failed', 'middleware/verifyBolnaWebhook.js'],
   ['BOLNA_WEBHOOK_BAD_REQUEST', 400, 'Invalid Bolna webhook payload', 'controllers/bolnaWebhookController.js'],
   [
