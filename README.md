@@ -15,7 +15,6 @@ This repository is the **Express backend** for that workflow: clients and appoin
 
 - **Clients & appointments** — Create and list appointments, update schedule, complete visits; data is scoped per authenticated owner.
 - **Voice AI outcomes** — Outbound calls plus webhook handling map executions to confirm, cancel, or reschedule paths on appointments.
-- **Waitlist & slot recovery** — When cancellations free a slot, the waitlist drives who is offered the time so capacity is reclaimed.
 - **Internal triggers** — Authenticated endpoints to batch confirmation calls or place a single test call linked to an appointment.
 - **Health check** — `GET /api/health` stays `503` until MongoDB connects.
 
@@ -60,7 +59,7 @@ Copy `.env.example` to `.env` and set at least:
 | `BOLNA_WEBHOOK_VERIFY_IP` | Optional | Set to `true` to enforce allowlisted caller IPs (`BOLNA_WEBHOOK_IPS`) |
 | `CONFIRMATION_LEAD_MINUTES` / `CONFIRMATION_LEAD_WINDOW_MINUTES` | Optional | Batch confirmation window for internal triggers |
 
-JWT lifetimes default to access `15m` and refresh `7d` (`JWT_ACCESS_EXPIRES_IN`, `JWT_REFRESH_EXPIRES_IN`).
+JWT lifetimes default to access `1d` and refresh `60d` (`JWT_ACCESS_EXPIRES_IN`, `JWT_REFRESH_EXPIRES_IN`).
 
 On Windows, if Atlas SRV lookup fails (`querySrv ECONNREFUSED`), use a non-SRV URI or set `MONGODB_DNS_SERVERS` as documented in `.env.example`.
 
@@ -148,28 +147,6 @@ Configure this URL in your Bolna project (e.g. `https://your-host/api/webhooks/b
 
 ---
 
-## Example: register and call a protected route
-
-```bash
-# Register
-curl -s -X POST http://localhost:3000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"firstName":"Test","lastName":"User","email":"test@example.com","password":"secret123"}'
-
-# Login — copy accessToken from response
-curl -s -X POST http://localhost:3000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"secret123"}'
-
-# Current user
-curl -s http://localhost:3000/api/users/me \
-  -H "Authorization: Bearer ACCESS_TOKEN_HERE"
-```
-
-On **Windows CMD**, caret line continuation (`^`) works with `curl.exe`. In **PowerShell**, prefer `-Body '{"email":"..."}'` with `Invoke-RestMethod` or quoted JSON compatible with your shell.
-
----
-
 ## Repository layout
 
 ```
@@ -183,14 +160,6 @@ services/        Business logic (appointments, Bolna client/normalize/webhook)
 utils/           Shared helpers (responses, errors, owner scope)
 server.js        App entry — mounts routes and listens
 ```
-
----
-
-## Security notes for production
-
-- Use strong random values for JWT secrets and never commit `.env`.
-- Run behind HTTPS; `trust proxy` is enabled when you terminate TLS at a load balancer — configure `X-Forwarded-For` correctly if you enable Bolna IP verification.
-- Restrict database network access (Atlas IP allowlist or VPC) and rotate API keys regularly.
 
 ---
 
