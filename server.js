@@ -6,7 +6,6 @@ import authRouter from './routes/auth.js';
 import usersRouter from './routes/users.js';
 import clientsRouter from './routes/clients.js';
 import appointmentsRouter from './routes/appointments.js';
-import waitlistRouter from './routes/waitlist.js';
 import bolnaWebhookRouter from './routes/webhooks/bolna.js';
 import internalRouter from './routes/internal.js';
 import notFound from './middleware/notFound.js';
@@ -74,7 +73,6 @@ app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/clients', clientsRouter);
 app.use('/api/appointments', appointmentsRouter);
-app.use('/api/waitlist', waitlistRouter);
 app.use('/api/webhooks/bolna', bolnaWebhookRouter);
 app.use('/api/internal', internalRouter);
 

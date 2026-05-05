@@ -20,9 +20,15 @@ function isValidAppointmentId(s) {
   return s != null && mongoose.isValidObjectId(String(s));
 }
 
+function hasNonEmptyExtractedData(norm) {
+  const ex = norm.extracted_data;
+  return ex != null && typeof ex === 'object' && Object.keys(ex).length > 0;
+}
+
 /**
  * Process Bolna execution webhook body.
- * @returns {Promise<{ ok: boolean, duplicate?: boolean, missing?: string, appointment?: import('mongoose').Document }>}
+ * Appointment updates run only when the payload includes non-empty `extracted_data`.
+ * @returns {Promise<{ ok: boolean, missing?: string, appointment?: import('mongoose').Document, progress?: boolean, executionLogDuplicate?: boolean, skippedNoExtraction?: boolean }>}
  */
 export async function processBolnaWebhook(body) {
   const norm = normalizeBolnaExecutionPayload(body);
@@ -33,8 +39,9 @@ export async function processBolnaWebhook(body) {
   if (!norm.status || String(norm.status).trim() === '') {
     return { ok: false, missing: 'status' };
   }
-  if (!TERMINAL_LOG_STATUSES.has(norm.status)) {
-    return { ok: true, ignored: true };
+
+  if (!hasNonEmptyExtractedData(norm)) {
+    return { ok: true, skippedNoExtraction: true };
   }
 
   if (!isValidAppointmentId(norm.appointmentId)) {
@@ -46,6 +53,14 @@ export async function processBolnaWebhook(body) {
     return { ok: false, missing: 'appointment' };
   }
 
+  const isTerminal = TERMINAL_LOG_STATUSES.has(norm.status);
+
+  if (!isTerminal) {
+    const result = await appointmentService.syncBolnaProgressToAppointment(appt, norm);
+    return { ok: true, appointment: result.appointment, progress: true };
+  }
+
+  let executionLogDuplicate = false;
   try {
     await VoiceExecutionLog.create({
       ownerId: appt.ownerId,
@@ -55,9 +70,10 @@ export async function processBolnaWebhook(body) {
     });
   } catch (err) {
     if (err?.code === 11000) {
-      return { ok: true, duplicate: true };
+      executionLogDuplicate = true;
+    } else {
+      throw err;
     }
-    throw err;
   }
 
   const fresh = await Appointment.findById(norm.appointmentId);
@@ -66,5 +82,9 @@ export async function processBolnaWebhook(body) {
   }
 
   const result = await appointmentService.applyVoiceOutcomeToAppointment(fresh, norm);
-  return { ok: true, appointment: result.appointment };
+  return {
+    ok: true,
+    appointment: result.appointment,
+    executionLogDuplicate,
+  };
 }

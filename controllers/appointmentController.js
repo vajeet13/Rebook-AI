@@ -26,12 +26,9 @@ function appointmentPublic(doc) {
     previousStartsAt: o.previousStartsAt ?? null,
     previousEndsAt: o.previousEndsAt ?? null,
     rescheduledAt: o.rescheduledAt ?? null,
-    offerReleasedSlotToWaitlist: o.offerReleasedSlotToWaitlist ?? true,
     lastBolnaExecutionId: o.lastBolnaExecutionId ?? null,
     recoveryCallScheduledFor: o.recoveryCallScheduledFor ?? null,
     voiceOutcome: o.voiceOutcome ?? {},
-    recoveredFromWaitlistEntryId: o.recoveredFromWaitlistEntryId?.toString?.() ?? null,
-    recoveryFilledByAppointmentId: o.recoveryFilledByAppointmentId?.toString?.() ?? null,
     createdAt: o.createdAt,
     updatedAt: o.updatedAt,
   };
@@ -70,8 +67,6 @@ export async function createAppointment(req, res) {
 
   const serviceId = req.body?.serviceId != null ? String(req.body.serviceId).trim() || null : null;
   const resourceId = req.body?.resourceId != null ? String(req.body.resourceId).trim() || null : null;
-  const offerReleasedSlotToWaitlist =
-    req.body?.offerReleasedSlotToWaitlist === false ? false : true;
 
   const appt = await Appointment.create({
     ownerId,
@@ -81,7 +76,6 @@ export async function createAppointment(req, res) {
     endsAt,
     serviceId,
     resourceId,
-    offerReleasedSlotToWaitlist,
     status: 'scheduled',
   });
 

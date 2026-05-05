@@ -354,40 +354,6 @@
       ]
     },
     {
-      "name": "Waitlist",
-      "item": [
-        {
-          "name": "POST Join waitlist",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"clientId\": \"CLIENT_MONGO_ID\",\n  \"serviceId\": \"consult\",\n  \"resourceId\": \"room-1\"\n}"
-            },
-            "url": "{{baseUrl}}/api/waitlist",
-            "description": ""
-          },
-          "response": []
-        },
-        {
-          "name": "GET List waitlist",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": "{{baseUrl}}/api/waitlist",
-            "description": ""
-          },
-          "response": []
-        }
-      ]
-    },
-    {
       "name": "Webhooks",
       "item": [
         {
@@ -408,7 +374,7 @@
               "raw": "{\n  \"id\": \"00000000-0000-4000-8000-000000000001\",\n  \"status\": \"completed\",\n  \"transcript\": \"User confirmed.\",\n  \"extracted_data\": {\n    \"appointment_outcome\": \"confirmed\",\n    \"appointmentId\": \"APPOINTMENT_MONGO_ID\"\n  },\n  \"context_details\": {\n    \"appointmentId\": \"APPOINTMENT_MONGO_ID\"\n  }\n}"
             },
             "url": "{{baseUrl}}/api/webhooks/bolna",
-            "description": "Simulate Bolna; set `appointmentId` to a real id. Use extractions: appointment_outcome, cancellation_reason, new_slot_iso."
+            "description": "Simulate Bolna; set `appointmentId` to a real id. Use extractions: appointment_outcome, cancellation_reason, new_slot_iso. The server applies updates only when `extracted_data` is present and non-empty; otherwise the response is 200 with `processed: false` and `skipped: true`."
           },
           "response": []
         }

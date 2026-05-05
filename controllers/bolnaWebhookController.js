@@ -4,12 +4,6 @@ import * as bolnaWebhookService from '../services/bolnaWebhookService.js';
 
 export async function handleBolnaWebhook(req, res) {
   const result = await bolnaWebhookService.processBolnaWebhook(req.body);
-  if (result.duplicate) {
-    return sendSuccess(res, { processed: false, duplicate: true });
-  }
-  if (result.ignored) {
-    return sendSuccess(res, { processed: false, ignored: true });
-  }
   if (!result.ok) {
     const msg =
       result.missing === 'executionId'
@@ -24,5 +18,16 @@ export async function handleBolnaWebhook(req, res) {
     const status = result.missing === 'appointment' ? 404 : 400;
     return sendError(res, status, msg, BOLNA_WEBHOOK_BAD_REQUEST);
   }
-  return sendSuccess(res, { processed: true });
+  if (result.skippedNoExtraction) {
+    return sendSuccess(res, {
+      processed: false,
+      skipped: true,
+      reason: 'no_extracted_data',
+    });
+  }
+  return sendSuccess(res, {
+    processed: true,
+    progress: result.progress === true,
+    executionLogReplay: result.executionLogDuplicate === true,
+  });
 }

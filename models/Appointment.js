@@ -48,25 +48,9 @@ const appointmentSchema = new mongoose.Schema(
     previousStartsAt: { type: Date, default: null },
     previousEndsAt: { type: Date, default: null },
     rescheduledAt: { type: Date, default: null },
-    offerReleasedSlotToWaitlist: { type: Boolean, default: true },
     lastBolnaExecutionId: { type: String, default: null },
     recoveryCallScheduledFor: { type: Date, default: null },
     voiceOutcome: { type: voiceOutcomeSchema, default: () => ({}) },
-    recoveredFromWaitlistEntryId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'WaitlistEntry',
-      default: null,
-    },
-    fulfilledWaitlistForAppointmentId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Appointment',
-      default: null,
-    },
-    recoveryFilledByAppointmentId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Appointment',
-      default: null,
-    },
   },
   { timestamps: true }
 );

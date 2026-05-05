@@ -2,15 +2,20 @@
 
 **Turn no-shows into rebooked revenue using voice AI.**
 
-Rebook AI is an Express backend for managing clients, appointments, and a simple waitlist, with outbound confirmation calls and a webhook that records voice outcomes ([Bolna](https://www.bolna.ai/)). It uses JWT authentication, MongoDB (Mongoose), and structured error responses suitable for dashboards and integrations.
+## Goal
+
+The goal of this system is to reduce appointment no-shows by actively calling users (via a voice AI agent), understanding their intent, and automatically taking actions like confirming, cancelling, or rescheduling appointments.
+This repository is the **Express backend** for that workflow: clients and appointments, JWT-scoped APIs, outbound confirmation calls, and a [Bolna](https://www.bolna.ai/) webhook that turns voice outcomes into structured booking updates. It uses MongoDB (Mongoose) and consistent JSON errors for dashboards and integrations.
+
+**Live:** [https://regal-mochi-ba82b6.netlify.app/](https://regal-mochi-ba82b6.netlify.app/)
 
 ---
 
 ## Features
 
 - **Clients & appointments** — Create and list appointments, update schedule, complete visits; data is scoped per authenticated owner.
-- **Waitlist** — Join and list entries for reuse when slots open.
-- **Voice confirmation flow** — Optional Bolna outbound calls for upcoming appointments plus a webhook that maps execution payloads to confirmation, cancellation, or reschedule signals on appointments.
+- **Voice AI outcomes** — Outbound calls plus webhook handling map executions to confirm, cancel, or reschedule paths on appointments.
+- **Waitlist & slot recovery** — When cancellations free a slot, the waitlist drives who is offered the time so capacity is reclaimed.
 - **Internal triggers** — Authenticated endpoints to batch confirmation calls or place a single test call linked to an appointment.
 - **Health check** — `GET /api/health` stays `503` until MongoDB connects.
 
@@ -22,6 +27,7 @@ Rebook AI is an Express backend for managing clients, appointments, and a simple
 - **Framework:** Express 5
 - **Database:** MongoDB via Mongoose
 - **Auth:** Access + refresh JWTs (`jsonwebtoken`, `bcryptjs`)
+- **Frontend:** Flutter — [Rebook-AI-App](https://github.com/vajeet13/Rebook-AI-App) (web client for this API: auth, dashboard, clients, appointments)
 
 Requires **Node 18+** (uses `node --env-file` in `npm run dev`).
 
@@ -72,7 +78,7 @@ npm start
 
 ### 4. Postman
 
-Import `postman/Rebook-AI.postman_collection.json` to exercise the HTTP API locally or against a deployed host.
+Import `postman/Rebook-AI.Local.postman_collection.json` or `postman/Rebook-AI.Production.postman_collection.json` to exercise the HTTP API locally or against a deployed host.
 
 ---
 
@@ -123,13 +129,6 @@ Base path for JSON APIs is `/api`.
 | `GET` | `/:appointmentId` | Get appointment |
 | `PATCH` | `/:appointmentId` | Update schedule/details |
 | `PATCH` | `/:appointmentId/complete` | Mark complete |
-
-### Waitlist (`/api/waitlist`)
-
-| Method | Path | Notes |
-|--------|------|--------|
-| `POST` | `/` | Add waitlist entry |
-| `GET` | `/` | List entries |
 
 ### Webhooks (`/api/webhooks/bolna`)
 

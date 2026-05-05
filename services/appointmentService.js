@@ -1,6 +1,5 @@
 import { Appointment } from '../models/Appointment.js';
 import { parseCallDetailFromExtractedData } from './bolnaExtractedData.js';
-import * as recoveryOrchestrator from './recoveryOrchestrator.js';
 
 const TERMINAL_NO_CONVERSATION = new Set([
   'no-answer',
@@ -69,6 +68,53 @@ function assignVoiceOutcome(appt, voPatch) {
 }
 
 /**
+ * Persist latest webhook fields for in-progress / non-terminal Bolna executions (ringing, in-progress, etc.).
+ * Does not change appointment status or resolved outcome; terminal webhooks use {@link applyVoiceOutcomeToAppointment}.
+ * @param {import('mongoose').Document} appt
+ * @param {ReturnType<import('./bolnaNormalize.js').normalizeBolnaExecutionPayload>} norm
+ */
+export async function syncBolnaProgressToAppointment(appt, norm) {
+  const hasExtracted =
+    norm.extracted_data && typeof norm.extracted_data === 'object' && Object.keys(norm.extracted_data).length > 0;
+  const callDetail = hasExtracted ? parseCallDetailFromExtractedData(norm.extracted_data) : null;
+  const hasContext =
+    norm.context_details &&
+    typeof norm.context_details === 'object' &&
+    Object.keys(norm.context_details).length > 0;
+
+  const cur = appt.get('voiceOutcome')?.toObject?.() ?? appt.voiceOutcome ?? {};
+
+  const voPatch = {
+    lastExecutionId: norm.executionId,
+    rawStatus: norm.status,
+    summary: norm.summary || callDetail?.callSummary || cur.summary || null,
+    transcript:
+      typeof norm.transcript === 'string' && norm.transcript.length > 0
+        ? norm.transcript
+        : cur.transcript ?? null,
+    callSummary: callDetail?.callSummary ?? cur.callSummary ?? null,
+    cancellationReason: hasExtracted
+      ? pickCancellationReason(norm.extracted_data, callDetail) ?? cur.cancellationReason ?? null
+      : cur.cancellationReason ?? null,
+    updatedAt: new Date(),
+  };
+
+  if (hasExtracted) {
+    voPatch.extractedData = norm.extracted_data;
+  }
+  if (hasContext) {
+    voPatch.contextDetails = norm.context_details;
+  }
+
+  assignVoiceOutcome(appt, voPatch);
+  if (norm.executionId) {
+    appt.lastBolnaExecutionId = String(norm.executionId);
+  }
+  await appt.save();
+  return { appointment: appt };
+}
+
+/**
  * Apply webhook outcome when Bolna sends a terminal execution status.
  * @param {import('mongoose').Document} appt
  * @param {ReturnType<import('./bolnaNormalize.js').normalizeBolnaExecutionPayload>} norm
@@ -123,7 +169,6 @@ export async function applyVoiceOutcomeToAppointment(appt, norm) {
           appt.lastBolnaExecutionId = norm.executionId;
         }
         await appt.save();
-        await recoveryOrchestrator.onRescheduleReleasedSlot(appt, oldStart, oldEnd);
         return { appointment: appt };
       }
       if (['scheduled', 'pending_confirmation', 'confirmed'].includes(appt.status)) {
@@ -146,10 +191,6 @@ export async function applyVoiceOutcomeToAppointment(appt, norm) {
     appt.lastBolnaExecutionId = norm.executionId;
   }
   await appt.save();
-
-  if (appt.status === 'cancelled') {
-    await recoveryOrchestrator.onCancellation(appt);
-  }
 
   return { appointment: appt };
 }
